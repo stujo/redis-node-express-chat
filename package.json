@@ -5,8 +5,8 @@
     "start": "node app.js"
   },
   "dependencies": {
+    "body-parser": "*",
     "express": "^4.0.0",
-    "body-parser":"*"  
+    "redis": "^0.12.1"
   }
 }
-

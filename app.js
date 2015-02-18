@@ -4,6 +4,17 @@ var http = require('http');
 var path = require('path');
 var bodyParser = require('body-parser')
 
+function redisFactory() {
+  if (process.env.REDISTOGO_URL) {
+    var rtg = require("url").parse(process.env.REDISTOGO_URL);
+    var redis = require("redis").createClient(rtg.port, rtg.hostname);
+    redis.auth(rtg.auth.split(":")[1]);
+  } else {
+    var redis = require("redis").createClient();
+  }
+  return redis;
+}
+
 var app = express();
 app.set('port', 3000);
 app.use(express.static(path.join(__dirname, 'public')));
@@ -18,17 +29,41 @@ app.get('/', function(req, res) {
 
 function ClientPool() {
   var clients = [];
-  this.recieveMsg = function(message) {
-    var msg = JSON.stringify(message);
+
+   function incomingMessage(message){
+     publisher.publish("chatter", JSON.stringify(message));
+   }
+
+  function broadcastMessage(message) {
     while (clients.length > 0) {
       var client = clients.pop();
-      client.end(msg);
+      client.end(message);
     }
   }
 
-  this.addClient = function(req,res){
+  function addClient(req, res) {
     clients.push(res);
   }
+
+  var subscriber = redisFactory();
+  subscriber.on("error", function(err) {
+    console.error('There was an error with the redis client ' + err);
+  });
+
+  subscriber.on('message', function(channel, msg) {
+    if (channel === 'chatter') {
+      broadcastMessage(msg);
+    }
+  });
+
+  subscriber.subscribe('chatter');
+
+
+  var publisher = redisFactory();
+
+  publisher.on("error", function(err) {
+    console.error('There was an error with the redis client ' + err);
+  });
 
   // This interval will clean up all the clients every minute to avoid timeouts
   setInterval(function() {
@@ -38,6 +73,11 @@ function ClientPool() {
       client.end();
     }
   }, 60000);
+
+  return {
+    addClient: addClient,
+    incomingMessage: incomingMessage
+  };
 }
 
 var clientPool = new ClientPool();
@@ -49,10 +89,9 @@ app.get('/poll/*', function(req, res) {
 
 // Msg endpoint
 app.post('/msg', function(req, res) {
-  clientPool.recieveMsg(req.body);
+  clientPool.incomingMessage(req.body);
   res.end();
 });
-
 
 http.createServer(app).listen(app.get('port'), function() {
   console.log('Express server listening on port ' + app.get('port'));
