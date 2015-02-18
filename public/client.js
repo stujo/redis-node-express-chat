@@ -38,22 +38,24 @@
 
    $('#message-input').keydown(function(e) {
      if (e.keyCode == 13) {
-       $.ajax({
-         type: "POST",
-         url: "/msg",
-         data: JSON.stringify({
-           "username": name,
-           "message": $('#message-input').val().trim()
-         }),
-         contentType: "application/json"
-       });
-       $(this).val('');
-       $('.jumbotron').hide();
        e.preventDefault()
+
+       var message = $('#message-input').val().trim();
+       if(message){
+         $.ajax({
+           type: "POST",
+           url: "/msg",
+           data: JSON.stringify({
+             "username": name,
+             "message": message
+           }),
+           contentType: "application/json"
+         });
+         $(this).val('');
+         $('.jumbotron').hide();
+       }
      }
    });
-
-
 
    $('.user-form').show();
  });

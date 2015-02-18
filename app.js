@@ -31,7 +31,9 @@ function ClientPool() {
   var clients = [];
 
    function incomingMessage(message){
-     publisher.publish("chatter", JSON.stringify(message));
+    if(message && message.message){
+       publisher.publish("chatter", JSON.stringify(message));
+     }
    }
 
   function broadcastMessage(message) {
