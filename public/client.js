@@ -1,29 +1,24 @@
  $(document).ready(function() {
    var name = '';
-   var polling = false;
+
+   var client = new BroadcastHubClient();
+   client.subscribe('chatter');
+   client.on('message:chatter', function(payload) {
+    var msg = JSON.parse(payload);
+     $('.jumbotron').hide();
+     var html = '<div class="panel panel-success"><div class="panel-heading"><h3 class="panel-title">' +
+       msg.username +
+       '</h3></div><div class="panel-body">' + msg.message + '</div></div>';
+     var d = $('.message-area');
+     d.append(html);
+     d.scrollTop(d.prop("scrollHeight"));
+   });
 
    function go() {
      name = $('#user-name').val();
      $('#user-name').val('');
      $('.user-form').hide();
      $('.chat-box').show();
-     poll();
-   };
-
-   function poll() {
-     $.getJSON('/poll/' + new Date().getTime(), function(response, statusText, jqXHR) {
-       if (jqXHR.status == 200) {
-         $('.jumbotron').hide();
-         msg = response;
-         var html = '<div class="panel panel-success"><div class="panel-heading"><h3 class="panel-title">' +
-           msg.username +
-           '</h3></div><div class="panel-body">' + msg.message + '</div></div>';
-         var d = $('.message-area');
-         d.append(html);
-         d.scrollTop(d.prop("scrollHeight"));
-       }
-       poll();
-     });
    };
 
    $('#user-name').keydown(function(e) {
@@ -41,7 +36,7 @@
        e.preventDefault()
 
        var message = $('#message-input').val().trim();
-       if(message){
+       if (message) {
          $.ajax({
            type: "POST",
            url: "/msg",
