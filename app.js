@@ -16,25 +16,44 @@ app.get('/', function(req, res) {
   });
 });
 
-var clients = [];
+function ClientPool() {
+  var clients = [];
+  this.recieveMsg = function(message) {
+    var msg = JSON.stringify(message);
+    while (clients.length > 0) {
+      var client = clients.pop();
+      client.end(msg);
+    }
+  }
+
+  this.addClient = function(req,res){
+    clients.push(res);
+  }
+
+  // This interval will clean up all the clients every minute to avoid timeouts
+  setInterval(function() {
+    while (clients.length > 0) {
+      var client = clients.pop();
+      client.writeHeader(204);
+      client.end();
+    }
+  }, 60000);
+}
+
+var clientPool = new ClientPool();
 
 // Poll endpoint
 app.get('/poll/*', function(req, res) {
-  clients.push(res);
+  clientPool.addClient(req, res);
 });
 
 // Msg endpoint
 app.post('/msg', function(req, res) {
-  message = req.body;
-  var msg = JSON.stringify(message);
-  while(clients.length > 0) {
-    var client = clients.pop();
-    client.end(msg);
-  }
+  clientPool.recieveMsg(req.body);
   res.end();
 });
 
-http.createServer(app).listen(app.get('port'), function(){
+
+http.createServer(app).listen(app.get('port'), function() {
   console.log('Express server listening on port ' + app.get('port'));
 });
-
