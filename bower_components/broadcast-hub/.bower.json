@@ -1,0 +1,28 @@
+{
+  "name": "broadcast-hub",
+  "main": "broadcast-hub-client.js",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "lib",
+    "src",
+    "example"
+  ],
+  "dependencies": {
+    "sockjs": "git://github.com/rubenv/bower-sockjs#master"
+  },
+  "homepage": "https://github.com/rubenv/node-broadcast-hub",
+  "version": "0.1.8",
+  "_release": "0.1.8",
+  "_resolution": {
+    "type": "version",
+    "tag": "0.1.8",
+    "commit": "025b4e5cfe7307bf75fe8b10b23b30dbdf30ca77"
+  },
+  "_source": "git://github.com/rubenv/node-broadcast-hub.git",
+  "_target": "~0.1.8",
+  "_originalSource": "broadcast-hub",
+  "_direct": true
+}

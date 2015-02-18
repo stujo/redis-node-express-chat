@@ -3,6 +3,7 @@ var fs = require('fs');
 var http = require('http');
 var path = require('path');
 var bodyParser = require('body-parser')
+var broadcastHub = require('broadcast-hub');
 
 function redisFactory() {
   if (process.env.REDISTOGO_URL) {
@@ -18,6 +19,8 @@ function redisFactory() {
 var app = express();
 app.set('port', (process.env.PORT || 3000));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/bower_components',  express.static(path.join(__dirname, 'bower_components')));
+
 app.use(bodyParser.json());
 
 // Serve up our static resources
@@ -95,6 +98,11 @@ app.post('/msg', function(req, res) {
   res.end();
 });
 
-http.createServer(app).listen(app.get('port'), function() {
+var server = http.createServer(app).listen(app.get('port'), function() {
   console.log('Express server listening on port ' + app.get('port'));
 });
+
+broadcastHub.listen(server);
+
+
+

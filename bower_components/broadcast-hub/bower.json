@@ -1,0 +1,16 @@
+{
+  "name": "broadcast-hub",
+  "main": "broadcast-hub-client.js",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "lib",
+    "src",
+    "example"
+  ],
+  "dependencies": {
+    "sockjs": "git://github.com/rubenv/bower-sockjs#master"
+  }
+}
