@@ -19,7 +19,7 @@ function redisFactory() {
 var app = express();
 app.set('port', (process.env.PORT || 3000));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/bower_components',  express.static(path.join(__dirname, 'bower_components')));
+app.use('/bower_components', express.static(path.join(__dirname, 'bower_components')));
 
 app.use(bodyParser.json());
 
@@ -30,71 +30,18 @@ app.get('/', function(req, res) {
   });
 });
 
-function ClientPool() {
-  var clients = [];
+var publisher = redisFactory();
 
-   function incomingMessage(message){
-    if(message && message.message){
-       publisher.publish("chatter", JSON.stringify(message));
-     }
-   }
-
-  function broadcastMessage(message) {
-    while (clients.length > 0) {
-      var client = clients.pop();
-      client.end(message);
-    }
-  }
-
-  function addClient(req, res) {
-    clients.push(res);
-  }
-
-  var subscriber = redisFactory();
-  subscriber.on("error", function(err) {
-    console.error('There was an error with the redis client ' + err);
-  });
-
-  subscriber.on('message', function(channel, msg) {
-    if (channel === 'chatter') {
-      broadcastMessage(msg);
-    }
-  });
-
-  subscriber.subscribe('chatter');
-
-
-  var publisher = redisFactory();
-
-  publisher.on("error", function(err) {
-    console.error('There was an error with the redis client ' + err);
-  });
-
-  // This interval will clean up all the clients every minute to avoid timeouts
-  setInterval(function() {
-    while (clients.length > 0) {
-      var client = clients.pop();
-      client.writeHeader(204);
-      client.end();
-    }
-  }, 60000);
-
-  return {
-    addClient: addClient,
-    incomingMessage: incomingMessage
-  };
-}
-
-var clientPool = new ClientPool();
-
-// Poll endpoint
-app.get('/poll/*', function(req, res) {
-  clientPool.addClient(req, res);
+publisher.on("error", function(err) {
+  console.error('There was an error with the redis client ' + err);
 });
+
 
 // Msg endpoint
 app.post('/msg', function(req, res) {
-  clientPool.incomingMessage(req.body);
+  if (req.body && req.body.message) {
+    publisher.publish("chatter", JSON.stringify(req.body));
+  }
   res.end();
 });
 
@@ -103,6 +50,3 @@ var server = http.createServer(app).listen(app.get('port'), function() {
 });
 
 broadcastHub.listen(server);
-
-
-
